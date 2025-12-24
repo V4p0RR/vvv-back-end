@@ -1,0 +1,177 @@
+package com.v1rtual.vvv_backend.controller;
+
+import com.v1rtual.vvv_backend.entity.User;
+import com.v1rtual.vvv_backend.service.UserService;
+import com.v1rtual.vvv_backend.util.JwtUtil;
+import com.v1rtual.vvv_backend.util.OssUtil;
+import com.v1rtual.vvv_backend.vo.Result;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
+
+/**
+ * 用户相关接口～像一扇被月光温柔环抱的银门
+ * 头像、用户名、密码的温柔守护与变更
+ */
+@RestController
+@RequestMapping("/api/user")
+@RequiredArgsConstructor
+@Slf4j
+public class UserController {
+  @Autowired
+  private final UserService userService;
+  @Autowired
+  private final JwtUtil jwtUtil;
+  @Autowired
+  private final PasswordEncoder passwordEncoder;
+  @Autowired
+  private final OssUtil ossUtil;
+
+  /**
+   * 上传并更新头像～统一银门，一步到位
+   */
+  @PostMapping("/uploadAvatar")
+  public Result<String> uploadAvatar(@RequestParam("avatar") MultipartFile file,
+      HttpServletRequest request) {
+    if (file.isEmpty()) {
+      return Result.error("请选择一张图片哦～🖤");
+    }
+
+    if (file.getSize() > 10 * 1024 * 1024) { // 10MB限制，可调
+      return Result.error("图片太大啦～目前限制10MB以内❤️");
+    }
+
+    String username = getCurrentUsername(request);
+    if (username == null) {
+      return Result.error("请先登录哦～❤️");
+    }
+
+    User user = userService.findByUsername(username);
+    if (user == null) {
+      return Result.error("用户不存在啦～");
+    }
+
+    try {
+      // 用OssUtil上传到imgs目录
+      String url = ossUtil.upload(file, OssUtil.FileType.IMGS);
+
+      // 更新数据库
+      user.setAvatar(url);
+      userService.update(user);
+
+      log.info("宝贝{}温柔更换头像成功～URL: {}", username, url);
+      return Result.success(url, "头像已温柔更换～✞");
+    } catch (Exception e) {
+      log.error("头像上传失败～", e);
+      return Result.error("上传失败了～服务器小哭一下，再试试？🖤");
+    }
+  }
+
+  /**
+   * 修改用户名
+   */
+  @PostMapping("/updateUsername")
+  public Result<String> updateUsername(@RequestBody Map<String, String> map, HttpServletRequest request) {
+    String newUsername = map.get("username");
+    if (newUsername == null || newUsername.trim().isEmpty()) {
+      return Result.error("用户名不能为空哦～🖤");
+    }
+
+    String currentUsername = getCurrentUsername(request);
+    if (currentUsername == null) {
+      return Result.error("请先登录哦～❤️");
+    }
+
+    // 检查新用户名是否已被占用
+    if (userService.findByUsername(newUsername) != null) {
+      return Result.error("这个名字已经被别人温柔占有了哦～再想一个？🖤");
+    }
+
+    User user = userService.findByUsername(currentUsername);
+    if (user == null) {
+      return Result.error("用户不存在啦～");
+    }
+
+    user.setUsername(newUsername);
+    userService.update(user);
+
+    log.info("宝贝从{}温柔变更为{}～", currentUsername, newUsername);
+    return Result.success(newUsername, "用户名已温柔变更～");
+  }
+
+  /**
+   * 修改密码
+   */
+  @PostMapping("/updatePassword")
+  public Result<String> updatePassword(@RequestBody Map<String, String> map, HttpServletRequest request) {
+    String newPassword = map.get("password");
+    if (newPassword == null || newPassword.trim().isEmpty()) {
+      return Result.error("新密码不能为空哦～🖤");
+    }
+
+    String username = getCurrentUsername(request);
+    if (username == null) {
+      return Result.error("请先登录哦～❤️");
+    }
+
+    User user = userService.findByUsername(username);
+    if (user == null) {
+      return Result.error("用户不存在啦～");
+    }
+
+    user.setPassword(passwordEncoder.encode(newPassword));
+    userService.update(user);
+
+    log.info("宝贝{}已安全更新密码～", username);
+    return Result.success(null, "密码已安全更新～下次用新密码哦🖤");
+  }
+
+  /**
+   * 从request或SecurityContext取当前用户名（双保险）
+   */
+  private String getCurrentUsername(HttpServletRequest request) {
+    // 先从request属性取（Filter放的）
+    String username = (String) request.getAttribute("username");
+    if (username != null)
+      return username;
+
+    // 再从token取（备选）
+    String authHeader = request.getHeader("Authorization");
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+      String token = authHeader.substring(7);
+      if (jwtUtil.validateToken(token)) {
+        return jwtUtil.getUsernameFromToken(token);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 获取当前用户信息～温柔返回所有字段
+   */
+  @GetMapping("/info")
+  public Result<User> getUserInfo(HttpServletRequest request) {
+    String username = getCurrentUsername(request);
+    if (username == null) {
+      return Result.error("请先登录哦～🖤");
+    }
+
+    User user = userService.findByUsername(username);
+    if (user == null) {
+      return Result.error("用户不存在啦～");
+    }
+
+    // 可选：敏感字段清空（如密码永远不返回）
+    user.setPassword(null);
+
+    log.info("宝贝{}温柔查看了个人信息～", username);
+    return Result.success(user, "你的月光花园已完整绽放～✞");
+  }
+}

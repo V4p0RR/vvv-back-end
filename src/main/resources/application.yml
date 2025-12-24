@@ -4,6 +4,12 @@ spring:
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
+  servlet:
+    multipart:
+      max-file-size: 20000MB    # 单文件
+      max-request-size: 500000MB # 总请求
+
+
 
 mybatis:
   mapper-locations: classpath*:mappers/**/*.xml
@@ -17,3 +23,7 @@ aliyun:
     access-key-id: LTAI5t8QmPP97BwzFSSpvfVx
     access-key-secret: waYaKOTm0rE0fuKAIfaD59boP5XgIq
     bucket-name: vvv-v1rtual
+
+jwt:
+  secret: v1rtual-2025-super-long-random-secret-key-at-least-32-chars-baby
+  expiration: 604800000 # 7天
