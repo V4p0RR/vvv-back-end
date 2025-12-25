@@ -45,4 +45,10 @@ public interface UserMapper {
    */
   @Select("SELECT COUNT(*) FROM user")
   Long countUsers();
+
+  /**
+   * 根据 ID 查找用户
+   */
+  @Select("SELECT * FROM user WHERE id = #{id}")
+  User findById(Long id);
 }

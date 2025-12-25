@@ -2,6 +2,9 @@ package com.v1rtual.vvv_backend.util;
 
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.model.GeneratePresignedUrlRequest;
+import com.aliyun.oss.model.ListObjectsV2Request;
+import com.aliyun.oss.model.ListObjectsV2Result;
+import com.aliyun.oss.model.OSSObjectSummary;
 import com.aliyun.oss.model.ObjectMetadata;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,8 +13,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * OSS工具类
@@ -118,5 +124,44 @@ public class OssUtil {
    */
   public boolean exists(String fileName) {
     return ossClient.doesObjectExist(bucketName, fileName);
+  }
+
+  public List<String> listAllObjectKeys(String prefix) {
+    List<String> keys = new ArrayList<>();
+    String nextContinuationToken = null;
+
+    // 声明 result 在循环外（初始为 null）
+    ListObjectsV2Result result = null;
+
+    do {
+      ListObjectsV2Request request = new ListObjectsV2Request()
+          .withBucketName(bucketName)
+          .withPrefix(prefix != null ? prefix : "")
+          .withMaxKeys(1000)
+          .withContinuationToken(nextContinuationToken);
+
+      result = ossClient.listObjectsV2(request); // 赋值给外层的 result
+
+      for (OSSObjectSummary summary : result.getObjectSummaries()) {
+        String key = summary.getKey();
+        if (!key.endsWith("/")) {
+          keys.add(key);
+        }
+      }
+
+      nextContinuationToken = result.getNextContinuationToken();
+
+    } while (result != null && result.isTruncated() && nextContinuationToken != null);
+
+    return keys;
+  }
+
+  /**
+   * 获取指定前缀的所有公开URL
+   */
+  public List<String> listAllPublicUrls(String prefix) {
+    return listAllObjectKeys(prefix).stream()
+        .map(this::getPublicUrl)
+        .collect(Collectors.toList());
   }
 }

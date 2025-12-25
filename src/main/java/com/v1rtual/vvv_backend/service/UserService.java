@@ -59,4 +59,8 @@ public class UserService {
   public long countUsers() {
     return userMapper.countUsers();
   }
+
+  public User findById(Long id) {
+    return userMapper.findById(id);
+  }
 }
