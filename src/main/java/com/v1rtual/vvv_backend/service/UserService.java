@@ -49,10 +49,14 @@ public class UserService {
   }
 
   public void update(User user) {
-    userMapper.update(user); // 你之前有update方法对吧～
+    userMapper.update(user);
   }
 
   public User findByUsername(String username) {
     return userMapper.findByUsername(username);
+  }
+
+  public long countUsers() {
+    return userMapper.countUsers();
   }
 }

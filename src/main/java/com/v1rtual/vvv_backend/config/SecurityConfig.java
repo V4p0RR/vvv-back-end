@@ -27,6 +27,7 @@ public class SecurityConfig {
         .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/auth/**").permitAll() // 登录放行
+            .requestMatchers("/api/user/count").permitAll() // 统计用户数放行
             .anyRequest().authenticated() // 其他都需要登录
         )
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 无状态

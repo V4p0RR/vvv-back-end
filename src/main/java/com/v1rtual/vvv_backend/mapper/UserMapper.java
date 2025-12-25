@@ -39,4 +39,10 @@ public interface UserMapper {
   @Update("UPDATE user SET password = #{password}, description = #{description}, " +
       "sex = #{sex}, avatar = #{avatar} WHERE id = #{id}")
   int update(User user);
+
+  /**
+   * 统计注册用户总数
+   */
+  @Select("SELECT COUNT(*) FROM user")
+  Long countUsers();
 }

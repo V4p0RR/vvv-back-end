@@ -70,22 +70,22 @@ public class OssUtil {
     String suffix = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
     String fileName = fileType.getPath() + UUID.randomUUID() + suffix;
 
-    // 元数据～让文件更懂自己
+    // 元数据
     ObjectMetadata metadata = new ObjectMetadata();
     metadata.setContentLength(file.getSize());
     metadata.setContentType(file.getContentType());
 
-    // 流式上传～不落地磁盘，轻柔省内存
+    // 流式上传
     try (InputStream inputStream = file.getInputStream()) {
       ossClient.putObject(bucketName, fileName, inputStream, metadata);
     }
 
-    log.info("宝贝的{}已安全抵达{}宝库～路径：{}", suffix, fileType.name(), fileName);
+    log.info("{}已安全抵达{}～路径：{}", suffix, fileType.name(), fileName);
     return getPublicUrl(fileName);
   }
 
   /**
-   * 获取公开URL～永恒可访问
+   * 获取公开URL
    */
   public String getPublicUrl(String fileName) {
     return "https://" + bucketName + "." + endpoint.replace("https://", "").replace("http://", "") + "/" + fileName;

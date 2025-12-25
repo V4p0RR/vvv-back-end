@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -173,5 +174,59 @@ public class UserController {
 
     log.info("宝贝{}温柔查看了个人信息～", username);
     return Result.success(user, "你的月光花园已完整绽放～✞");
+  }
+
+  /**
+   * 获取当前登录用户实体（双保险，复用getCurrentUsername）
+   */
+  private User getCurrentUser(HttpServletRequest request) {
+    String username = getCurrentUsername(request);
+    if (username == null) {
+      return null;
+    }
+    return userService.findByUsername(username);
+  }
+
+  /**
+   * 获取注册用户总数～像一盏银灯，记录多少灵魂来过
+   */
+  @GetMapping("/count")
+  public Result<Long> getUserCount() {
+    long count = userService.countUsers();
+    return Result.success(count, "古堡已有 " + count + " 位灵魂～✞");
+  }
+
+  /**
+   * 更新个人信息～统一银门，一次性温柔保存所有字段
+   * 前端传需要改的字段，密码留空就不改
+   */
+  @PutMapping("/updateInfo")
+  public Result<Void> updateInfo(@RequestBody User updateUser, HttpServletRequest request) {
+    User currentUser = getCurrentUser(request);
+    if (currentUser == null) {
+      return Result.error("请先登录哦～❤️");
+    }
+
+    // 性别校验
+    if (updateUser.getSex() != null && !List.of("MALE", "FEMALE", "SECRET").contains(updateUser.getSex())) {
+      return Result.error("性别格式错误～只支持MALE/FEMALE/SECRET哦🖤");
+    }
+
+    // 只更新前端传来的字段（密码为空就不改）
+    if (updateUser.getPassword() != null && !updateUser.getPassword().trim().isEmpty()) {
+      currentUser.setPassword(passwordEncoder.encode(updateUser.getPassword()));
+    }
+    if (updateUser.getDescription() != null) {
+      currentUser.setDescription(updateUser.getDescription());
+    }
+    if (updateUser.getSex() != null) {
+      currentUser.setSex(updateUser.getSex());
+    }
+    // avatar在uploadAvatar里单独处理
+
+    userService.update(currentUser);
+
+    log.info("宝贝{}温柔更新了个人信息～", currentUser.getUsername());
+    return Result.success("个人信息已温柔保存～✞");
   }
 }
