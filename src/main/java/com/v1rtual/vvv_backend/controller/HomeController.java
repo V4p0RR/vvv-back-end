@@ -3,19 +3,21 @@ package com.v1rtual.vvv_backend.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.v1rtual.vvv_backend.entity.Blog;
+import com.v1rtual.vvv_backend.entity.Gallery;
 import com.v1rtual.vvv_backend.entity.Gif;
 import com.v1rtual.vvv_backend.entity.HomeConfig;
-import com.v1rtual.vvv_backend.entity.Music;
 import com.v1rtual.vvv_backend.entity.Photo;
 import com.v1rtual.vvv_backend.entity.User;
 import com.v1rtual.vvv_backend.entity.Video;
 import com.v1rtual.vvv_backend.mapper.BlogMapper;
+import com.v1rtual.vvv_backend.mapper.GalleryMapper;
 import com.v1rtual.vvv_backend.mapper.GifMapper;
 import com.v1rtual.vvv_backend.mapper.HomeConfigMapper;
 import com.v1rtual.vvv_backend.mapper.MusicMapper;
 import com.v1rtual.vvv_backend.mapper.PhotoMapper;
 import com.v1rtual.vvv_backend.mapper.VideoMapper;
 import com.v1rtual.vvv_backend.service.UserService;
+import com.v1rtual.vvv_backend.vo.GalleryVO;
 import com.v1rtual.vvv_backend.vo.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +44,7 @@ public class HomeController {
   private final PhotoMapper photoMapper;
   private final UserService userService;
   private final MusicMapper musicMapper;
+  private final GalleryMapper galleryMapper;
 
   /**
    * 获取 Home 页面完整配置（供前端 Home.vue 调用）
@@ -62,9 +65,9 @@ public class HomeController {
       config = new HomeConfig();
       config.setMainType("video");
       config.setMainSrc("https://example.com/default-video.mp4");
-      config.setMainTitle("V1rtual 的月光时刻");
-      config.setMainDesc("欢迎来到我的想象世界～");
-      config.setMainAlt("月光温柔洒落");
+      config.setMainTitle("未知");
+      config.setMainDesc("未知");
+      config.setMainAlt("未知");
       config.setMainRandom(0);
       config.setGalleryJson("[]");
     }
@@ -72,9 +75,9 @@ public class HomeController {
     Map<String, Object> result = new HashMap<>();
     String mainType = StringUtils.defaultString(config.getMainType(), "video");
     String mainSrc = StringUtils.defaultString(config.getMainSrc(), "https://example.com/default.mp4");
-    String mainTitle = StringUtils.defaultString(config.getMainTitle(), "V1rtual 的月光时刻");
-    String mainDesc = StringUtils.defaultString(config.getMainDesc(), "欢迎来到我的想象世界～");
-    String mainAlt = StringUtils.defaultString(config.getMainAlt(), "月光温柔洒落");
+    String mainTitle = StringUtils.defaultString(config.getMainTitle(), "未知");
+    String mainDesc = StringUtils.defaultString(config.getMainDesc(), "未知");
+    String mainAlt = StringUtils.defaultString(config.getMainAlt(), "未知");
     boolean random = config.getMainRandom() != null && config.getMainRandom() == 1;
 
     List<String> availableFiles = new ArrayList<>();
@@ -146,16 +149,19 @@ public class HomeController {
     }
     result.put("pinnedBlog", pinnedBlog);
 
-    return Result.success(result, "Home 配置加载成功～✞");
+    return Result.success(result, "Home 配置加载成功");
   }
 
+  /**
+   * 获取随机 Main 资源 指定类型
+   */
   @GetMapping("/random")
   public Result<Map<String, Object>> getRandomMain(@RequestParam String type) {
     Map<String, Object> data = new HashMap<>();
     String randomSrc = null;
-    String uploaderUsername = "V1rtual";
+    String uploaderUsername = "未知";
     String uploaderAvatar = "/default-avatar.gif";
-    String uploadTime = "刚刚上传";
+    String uploadTime = "未知";
 
     // 1. 根据 type 从对应表随机取一条记录
     switch (type.toLowerCase()) {
@@ -215,16 +221,23 @@ public class HomeController {
     }
 
     data.put("src", randomSrc);
-    data.put("title", "随机月光时刻"); // 可从记录取或固定
-    data.put("description", "新的惊喜～");
+    data.put("title", "未知"); // 可从记录取或固定
+    data.put("description", "未知");
     data.put("alt", "随机资源");
     data.put("uploaderAvatar", uploaderAvatar);
     data.put("uploaderUsername", uploaderUsername);
     data.put("uploadTime", uploadTime);
 
-    return Result.success(data, "随机资源加载成功～✞");
+    return Result.success(data, "随机资源加载成功");
   }
 
+  /**
+   * 获取完整 资源 信息
+   * 
+   * @param src
+   * @param type
+   * @return
+   */
   @GetMapping("/full-item")
   public Result<Map<String, Object>> getFullMainItem(
       @RequestParam String src,
@@ -236,6 +249,9 @@ public class HomeController {
     String uploaderUsername = "V1rtual";
     String uploaderAvatar = "/default-avatar.gif";
     String uploadTime = "未知时间";
+    String title = "未知"; // 默认标题
+    String description = "未知"; // 默认描述
+    String alt = "未知"; // 默认 alt
 
     switch (type.toLowerCase()) {
       case "video":
@@ -246,6 +262,8 @@ public class HomeController {
           uploadTime = v.getCreatedAt() != null
               ? v.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
               : "未知时间";
+          title = StringUtils.defaultString(v.getTitle(), title);
+          description = StringUtils.defaultString(v.getDescription(), description);
         }
         break;
 
@@ -257,6 +275,9 @@ public class HomeController {
           uploadTime = g.getCreatedAt() != null
               ? g.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
               : "未知时间";
+          title = StringUtils.defaultString(g.getTitle(), title);
+          description = StringUtils.defaultString(g.getDescription(), description);
+          alt = description; // gif 没有 alt，用 description 代替
         }
         break;
 
@@ -269,17 +290,21 @@ public class HomeController {
           uploadTime = p.getCreatedAt() != null
               ? p.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
               : "未知时间";
+          title = StringUtils.defaultString(p.getTitle(), title);
+          description = StringUtils.defaultString(p.getDescription(), description);
+          alt = StringUtils.defaultString(p.getAlt(), alt);
         }
         break;
 
       default:
         return Result.error("不支持的类型");
     }
+
     if (record == null) {
       return Result.error("未找到该资源");
     }
 
-    // 用 uploaderId 查询 user 表的头像（如果有）
+    // 查询上传者头像
     if (uploaderId != null && uploaderId >= 0) {
       User user = userService.findById(uploaderId);
       if (user != null && StringUtils.isNotBlank(user.getAvatar())) {
@@ -287,15 +312,29 @@ public class HomeController {
       }
     }
 
-    // 填充返回数据
+    // 返回真实数据库字段
     data.put("src", src);
-    data.put("title", "随机资源"); // 可根据需要从 record 取真实 title
-    data.put("description", "新的惊喜～");
-    data.put("alt", "随机资源");
+    data.put("title", title);
+    data.put("description", description);
+    data.put("alt", alt);
     data.put("uploaderAvatar", uploaderAvatar);
     data.put("uploaderUsername", uploaderUsername);
     data.put("uploadTime", uploadTime);
 
     return Result.success(data, "完整资源加载成功～✞");
+  }
+
+  /**
+   * 随机获取 8 条 gallery 资源，并附带上传者真实头像
+   */
+  @GetMapping("/eight-random-galleries")
+  public Result<List<GalleryVO>> getEightRandomGalleries() {
+    try {
+      List<GalleryVO> list = galleryMapper.getRandomGalleriesWithAvatar(8);
+      return Result.success(list);
+    } catch (Exception e) {
+      log.error("随机获取 gallery 失败", e);
+      return Result.error("获取月光碎片失败...服务器小哭一下QAQ");
+    }
   }
 }

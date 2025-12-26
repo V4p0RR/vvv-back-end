@@ -2,9 +2,15 @@ package com.v1rtual.vvv_backend.entity;
 
 import java.time.LocalDateTime;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Video {
   private Long id;
   private String title;

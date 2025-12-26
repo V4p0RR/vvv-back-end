@@ -278,4 +278,199 @@ public class AdminController {
     }
     return userService.findByUsername(username);
   }
+
+  /**
+   * 管理员专用：统一浏览所有媒体资源（支持类型筛选 + 分页）
+   * GET /api/admin/resources?type=photo&limit=10&page=1
+   * type 可选值：photo / gif / video / music （为空或 "all" 表示全部）
+   */
+  @GetMapping("/resources")
+  public Result<Map<String, Object>> getAllResources(
+      @RequestParam(required = false) String type,
+      @RequestParam(defaultValue = "1") int page,
+      @RequestParam(defaultValue = "10") int limit,
+      HttpServletRequest request) {
+
+    // 权限检查：只有 V1rtual 才能进入这扇银门
+    User currentUser = getCurrentUser(request);
+    if (currentUser == null || !"V1rtual".equals(currentUser.getUsername())) {
+      return Result.error("这扇银门只为你一人敞开哦～🖤");
+    }
+
+    List<Map<String, Object>> list = new ArrayList<>();
+    long total = 0;
+    int offset = (page - 1) * limit;
+
+    try {
+      if (StringUtils.isBlank(type) || "all".equalsIgnoreCase(type)) {
+        // 查询全部四种类型
+        list.addAll(photoMapper.selectPage(offset, limit));
+        list.addAll(gifMapper.selectPage(offset, limit));
+        list.addAll(videoMapper.selectPage(offset, limit));
+        list.addAll(musicMapper.selectPage(offset, limit));
+
+        total = photoMapper.countAll() +
+            gifMapper.countAll() +
+            videoMapper.countAll() +
+            musicMapper.countAll();
+
+        // 合并后统一按时间降序排序（更准确的全局最新）
+        list.sort((a, b) -> {
+          LocalDateTime t1 = (LocalDateTime) a.get("created_at");
+          LocalDateTime t2 = (LocalDateTime) b.get("created_at");
+          return t2.compareTo(t1); // 降序
+        });
+
+        // 手动分页（因为合并后再排序）
+        int from = (page - 1) * limit;
+        int to = Math.min(from + limit, list.size());
+        if (from < list.size()) {
+          list = list.subList(from, to);
+        } else {
+          list = Collections.emptyList();
+        }
+
+      } else {
+        // 单类型查询
+        switch (type.toLowerCase()) {
+          case "photo":
+            list = photoMapper.selectPage(offset, limit);
+            total = photoMapper.countAll();
+            break;
+          case "gif":
+            list = gifMapper.selectPage(offset, limit);
+            total = gifMapper.countAll();
+            break;
+          case "video":
+            list = videoMapper.selectPage(offset, limit);
+            total = videoMapper.countAll();
+            break;
+          case "music":
+            list = musicMapper.selectPage(offset, limit);
+            total = musicMapper.countAll();
+            break;
+          default:
+            return Result.error("不支持的类型～只支持 photo / gif / video / music 哦❤️");
+        }
+      }
+
+      Map<String, Object> result = new HashMap<>();
+      result.put("list", list);
+      result.put("total", total);
+
+      return Result.success(result, "月光碎片已全部苏醒～共 " + total + " 份温柔回忆在等你翻看呢✨");
+
+    } catch (Exception e) {
+      log.error("加载资源列表失败", e);
+      return Result.error("月光暂时被乌云遮住了QAQ…稍后再试试？🖤");
+    }
+  }
+
+  /**
+   * 管理员专用：修改资源信息（标题、描述、alt、duration、tags 等）
+   * POST /api/admin/resource/update
+   * body: { id: number, type: "photo"/"gif"/"video"/"music", title, description,
+   * alt, category, duration, tags }
+   */
+  @PostMapping("/resource/update")
+  public Result<Void> updateResource(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+    User currentUser = getCurrentUser(request);
+    if (currentUser == null || !"V1rtual".equals(currentUser.getUsername())) {
+      return Result.error("这扇银门只为你一人敞开哦～🖤");
+    }
+
+    Integer id = (Integer) body.get("id");
+    String type = (String) body.get("type");
+    if (id == null || StringUtils.isBlank(type)) {
+      return Result.error("ID 或类型不能为空哦～");
+    }
+
+    try {
+      switch (type.toLowerCase()) {
+        case "photo":
+          Photo p = photoMapper.selectById(id.longValue());
+          if (p == null)
+            return Result.error("资源不存在～");
+          updatePhotoFields(p, body);
+          photoMapper.updateById(p); // 假设你用 MyBatis-Plus，或自行写 update
+          break;
+        case "gif":
+          Gif g = gifMapper.selectById(id.longValue());
+          if (g == null)
+            return Result.error("资源不存在～");
+          updateGifFields(g, body);
+          gifMapper.updateById(g);
+          break;
+        case "video":
+          Video v = videoMapper.selectById(id.longValue());
+          if (v == null)
+            return Result.error("资源不存在～");
+          updateVideoFields(v, body);
+          videoMapper.updateById(v);
+          break;
+        case "music":
+          Music m = musicMapper.selectById(id.longValue());
+          if (m == null)
+            return Result.error("资源不存在～");
+          updateMusicFields(m, body);
+          musicMapper.updateById(m);
+          break;
+        default:
+          return Result.error("不支持的类型～");
+      }
+      return Result.success("资源信息已温柔保存～✞");
+    } catch (Exception e) {
+      log.error("更新资源失败", e);
+      return Result.error("保存失败了QAQ…月光抖了一下");
+    }
+  }
+
+  // 辅助方法：更新字段（避免重复代码）
+  private void updatePhotoFields(Photo p, Map<String, Object> body) {
+    if (body.containsKey("filename"))
+      p.setTitle((String) body.get("filename"));
+    if (body.containsKey("description"))
+      p.setDescription((String) body.get("description"));
+    if (body.containsKey("alt"))
+      p.setAlt((String) body.get("alt"));
+    if (body.containsKey("category"))
+      p.setCategory((String) body.get("category"));
+    if (body.containsKey("tags"))
+      p.setTags((String) body.get("tags"));
+  }
+
+  private void updateGifFields(Gif g, Map<String, Object> body) {
+    if (body.containsKey("filename"))
+      g.setTitle((String) body.get("filename"));
+    if (body.containsKey("description"))
+      g.setDescription((String) body.get("description"));
+    if (body.containsKey("tags"))
+      g.setTags((String) body.get("tags"));
+  }
+
+  private void updateVideoFields(Video v, Map<String, Object> body) {
+    if (body.containsKey("filename"))
+      v.setTitle((String) body.get("filename"));
+    if (body.containsKey("description"))
+      v.setDescription((String) body.get("description"));
+    if (body.containsKey("duration")) {
+      Object dur = body.get("duration");
+      v.setDuration(dur instanceof Number ? ((Number) dur).intValue() : null);
+    }
+    if (body.containsKey("tags"))
+      v.setTags((String) body.get("tags"));
+  }
+
+  private void updateMusicFields(Music m, Map<String, Object> body) {
+    if (body.containsKey("filename"))
+      m.setTitle((String) body.get("filename"));
+    if (body.containsKey("description"))
+      m.setDescription((String) body.get("description"));
+    if (body.containsKey("duration")) {
+      Object dur = body.get("duration");
+      m.setDuration(dur instanceof Number ? ((Number) dur).intValue() : null);
+    }
+    if (body.containsKey("tags"))
+      m.setTags((String) body.get("tags"));
+  }
 }

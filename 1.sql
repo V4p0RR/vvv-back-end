@@ -29,21 +29,53 @@ CREATE TABLE blog (
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 图库表
-CREATE TABLE gallery (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(200) COMMENT '图片标题，可选',
-    description TEXT COMMENT '图片描述',
-    image_url VARCHAR(512) NOT NULL COMMENT '图片OSS URL',
-    user_id BIGINT NOT NULL COMMENT '上传者ID',
-    likes BIGINT DEFAULT 0 COMMENT '点赞数，可扩展',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '上传时间',
-    
-    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
-    INDEX idx_user (user_id),
-    INDEX idx_created (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+DROP TABLE IF EXISTS gallery; -- 如果你决定彻底迁移，先备份旧数据！
 
+CREATE TABLE gallery (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '资源ID',
+
+    -- 类型区分
+    type ENUM('photo', 'gif', 'video', 'music') NOT NULL COMMENT '资源类型',
+
+    -- 通用字段（所有类型都有）
+    title VARCHAR(255) COMMENT '标题（原filename）',
+    description TEXT COMMENT '描述',
+    src VARCHAR(512) NOT NULL COMMENT '资源主URL（OSS地址）',
+    tags VARCHAR(255) COMMENT '标签，逗号分隔',
+    likes BIGINT DEFAULT 0 COMMENT '点赞数',
+    view_count BIGINT DEFAULT 0 COMMENT '浏览/播放次数',
+    is_pinned TINYINT(1) DEFAULT 0 COMMENT '是否首页置顶（1=是）',
+
+    -- 上传者信息
+    user_id BIGINT NOT NULL COMMENT '上传者ID',
+    uploader_username VARCHAR(50) DEFAULT 'V1rtual' COMMENT '上传者用户名（冗余快查）',
+
+    -- 类型独有字段（允许NULL，不同类型使用不同字段）
+    alt VARCHAR(255) COMMENT '图片alt描述（photo专用）',
+    category VARCHAR(50) COMMENT '图片分类，如 portrait/landscape（photo专用）',
+
+    thumbnail VARCHAR(512) COMMENT '缩略图URL（video/gif可自动生成）',
+    duration INT COMMENT '时长（秒）（video/music专用）',
+
+    artist VARCHAR(100) COMMENT '歌手/创作者（music专用）',
+    album VARCHAR(100) COMMENT '专辑名（music专用）',
+    cover_image VARCHAR(512) COMMENT '专辑封面（music专用，可冗余src）',
+
+    -- 时间
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '上传时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    -- 外键与索引
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+
+    INDEX idx_type (type),
+    INDEX idx_user (user_id),
+    INDEX idx_created (created_at DESC),
+    INDEX idx_pinned (is_pinned),
+    INDEX idx_tags (tags),
+    INDEX idx_likes (likes DESC),
+    INDEX idx_views (view_count DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='统一资源表：图片、GIF、视频、音乐';
 
 CREATE TABLE home_config (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -163,3 +195,42 @@ ALTER TABLE music
 ALTER TABLE photo 
     ADD COLUMN uploader_id BIGINT DEFAULT 0 COMMENT '上传者ID' AFTER updated_at,
     ADD COLUMN uploader_username VARCHAR(50) DEFAULT 'V1rtual' COMMENT '上传者用户名' AFTER uploader_id;
+    
+    
+    CREATE TABLE comment (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    content TEXT NOT NULL COMMENT '评论内容',
+    user_id BIGINT NOT NULL COMMENT '评论者ID',
+    username VARCHAR(50) NOT NULL COMMENT '评论者用户名（冗余快查）',
+    target_type ENUM('gallery', 'blog') NOT NULL COMMENT '评论目标类型',
+    target_id BIGINT NOT NULL COMMENT '目标ID（gallery.id 或 blog.id）',
+    parent_id BIGINT DEFAULT NULL COMMENT '回复的评论ID（支持楼中楼）',
+    likes BIGINT DEFAULT 0 COMMENT '评论点赞数',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+    INDEX idx_target (target_type, target_id),
+    INDEX idx_parent (parent_id),
+    INDEX idx_created (created_at DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通用评论表：支持gallery和blog';
+
+-- 点赞记录表（用户对资源只能赞一次）
+CREATE TABLE gallery_like (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    gallery_id BIGINT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_user_gallery (user_id, gallery_id), -- 唯一约束，防重
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY (gallery_id) REFERENCES gallery(id) ON DELETE CASCADE
+);
+
+-- 评论点赞同理（可选，如果你想评论也只能赞一次）
+CREATE TABLE comment_like (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    comment_id BIGINT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_user_comment (user_id, comment_id)
+);

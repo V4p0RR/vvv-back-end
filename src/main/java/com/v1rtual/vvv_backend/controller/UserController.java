@@ -229,4 +229,24 @@ public class UserController {
     log.info("宝贝{}温柔更新了个人信息～", currentUser.getUsername());
     return Result.success("个人信息已温柔保存～✞");
   }
+
+  /**
+   * 根据username获取用户公开信息～像一扇银门，轻轻推开就能看见TA的月光
+   */
+  @GetMapping("/info/{username}")
+  public Result<User> getUserInfoByUsername(@PathVariable String username) {
+    if (username == null || username.trim().isEmpty()) {
+      return Result.error("username无效哦～🖤");
+    }
+
+    User user = userService.findByUsername(username);
+    if (user == null) {
+      return Result.error("这个小可爱还没来花园玩呢～");
+    }
+
+    // 敏感字段清空（密码永远不返回）
+    user.setPassword(null);
+
+    return Result.success(user, "TA的月光已完整绽放～✞");
+  }
 }

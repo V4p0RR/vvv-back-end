@@ -28,6 +28,13 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/auth/**").permitAll() // 登录放行
             .requestMatchers("/api/user/count").permitAll() // 统计用户数放行
+            .requestMatchers("/api/user/info/{username}").permitAll() // 用户信息放行
+            .requestMatchers("/api/home/**").permitAll() // 主页数据放行
+            .requestMatchers("/api/gallery/list").permitAll() // 画廊列表放行
+            .requestMatchers("/api/gallery/comments/**").permitAll() // 画廊评论列表放行
+            .requestMatchers("/api/gallery/comments/**").permitAll() // 画廊评论列表放行
+            .requestMatchers("/mobile-blocked.html").permitAll() // 移动端拦截页放行
+
             .anyRequest().authenticated() // 其他都需要登录
         )
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 无状态

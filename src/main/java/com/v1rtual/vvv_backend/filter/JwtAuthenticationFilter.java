@@ -37,7 +37,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
       if (jwtUtil.validateToken(jwt)) {
-        // 温柔放行～设置认证上下文
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
             username, null, java.util.Collections.emptyList());
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

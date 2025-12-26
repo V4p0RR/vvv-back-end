@@ -43,10 +43,10 @@ public class OssUtil {
    * 文件类型枚举
    */
   public enum FileType {
-    IMGS("imgs/"), // 静态图片的静谧殿堂
-    MUSIC("music/"), // 音乐的低吟回廊
-    GIF("gif/"), // GIF的跳动心跳室
-    VIDEO("video/"); // 视频的永恒故事厅
+    IMGS("imgs/"),
+    MUSIC("music/"),
+    GIF("gif/"),
+    VIDEO("video/");
 
     private final String path;
 
