@@ -75,11 +75,11 @@ public class GalleryController {
     System.out.println(descriptions);
     User user = getCurrentUser(request);
     if (user == null) {
-      return Result.error("请先登录才能上传哦～❤️");
+      return Result.error("请先登录才能上传哦～");
     }
 
     if (files == null || files.length == 0) {
-      return Result.error("请选择至少一个文件哦～🖤");
+      return Result.error("请选择至少一个文件哦～");
     }
 
     int successCount = 0;
@@ -95,7 +95,7 @@ public class GalleryController {
         title = titles[i];
       }
       if (StringUtils.isBlank(title)) {
-        title = file.getOriginalFilename(); // 兜底文件名（可去掉扩展名如果你想）
+        title = file.getOriginalFilename(); // 兜底文件名（可去掉扩展名）
         // 可选：去扩展名 title = FilenameUtils.removeExtension(title);
       }
 
@@ -195,10 +195,10 @@ public class GalleryController {
     }
 
     if (successCount == 0) {
-      return Result.error("所有文件上传失败啦～服务器小哭一下QAQ");
+      return Result.error("所有文件上传失败啦～QAQ");
     }
 
-    return Result.success("上传成功！月光花园多了 " + successCount + " 片温柔～✨");
+    return Result.success("上传成功！V1rtual多了" + successCount + "片记忆～✨");
   }
 
   private ResourceType determineType(String contentType) {
@@ -223,7 +223,7 @@ public class GalleryController {
   }
 
   /**
-   * 分页列表（公共可见）～现在每条回忆都温柔带着上传者的头像啦❤️
+   * 分页列表（公共可见）～现在每条回忆都温柔带着上传者的头像啦
    * 返回字段包括：uploaderAvatar（头像URL）、uploaderUsername（用户名）、userId（用户ID，用于弹详情）
    */
   @GetMapping("/list")
@@ -286,7 +286,7 @@ public class GalleryController {
   public Result<Void> like(@RequestBody Map<String, Long> body, HttpServletRequest request) {
     User user = getCurrentUser(request);
     if (user == null)
-      return Result.error("请先登录才能点赞哦～❤️");
+      return Result.error("请先登录才能点赞哦～");
 
     Long galleryId = body.get("id");
     if (galleryId == null)
@@ -294,31 +294,31 @@ public class GalleryController {
 
     // 检查是否已赞
     if (galleryMapper.hasLiked(user.getId(), galleryId) > 0) {
-      return Result.error("你已经点过赞啦～你的爱已经送到哦❤️");
+      return Result.error("你已经点过赞啦～");
     }
 
     // 插入点赞记录 + 资源likes+1
     galleryMapper.insertLike(user.getId(), galleryId);
     galleryMapper.incrementLikes(galleryId);
 
-    return Result.success("点赞成功～你的爱已送到❤️");
+    return Result.success("点赞成功～");
   }
 
   /**
-   * 获取评论（公共可见）～每条评论都温柔带着点赞数和当前用户是否已赞的状态❤️
+   * 获取评论（公共可见）～每条评论都温柔带着点赞数和当前用户是否已赞的状态
    * 返回的Comment实体会多两个字段：likeCount（点赞总数）、isLiked（当前用户是否已赞）
    */
   @GetMapping("/comments/{id}")
   public Result<List<Comment>> getComments(@PathVariable Long id, HttpServletRequest request) {
     if (id == null || id <= 0) {
-      return Result.error("资源ID无效哦～🖤");
+      return Result.error("资源ID无效哦～");
     }
 
     // 1. 查询该资源下的所有评论
     List<Comment> comments = commentMapper.selectGalleryCommentByTargetId(id); // 注意方法名拼写：Gallery（大写G）
 
     if (comments == null || comments.isEmpty()) {
-      return Result.success(List.of(), "还没有人留下温暖的话哦～快来第一条吧❤️");
+      return Result.success(List.of(), "还没有人留下温暖的话哦～");
     }
 
     // 2. 获取当前登录用户（可能为null，未登录）
@@ -354,7 +354,7 @@ public class GalleryController {
       comment.setIsLiked(Boolean.TRUE.equals(likedMap.get(comment.getId())));
     });
 
-    return Result.success(comments, "评论已温柔加载～每条都带着星星的温度✨");
+    return Result.success(comments, "评论已加载～");
   }
 
   /**
@@ -364,7 +364,7 @@ public class GalleryController {
   public Result<Void> comment(@RequestBody Map<String, Object> body, HttpServletRequest request) {
     User user = getCurrentUser(request);
     if (user == null)
-      return Result.error("请先登录才能评论哦～❤️");
+      return Result.error("请先登录才能评论哦～");
 
     Comment c = Comment.builder()
         .content((String) body.get("content"))
@@ -375,7 +375,7 @@ public class GalleryController {
         .build();
 
     commentMapper.insert(c);
-    return Result.success("评论成功～你的温柔已留下✨");
+    return Result.success("评论成功～");
   }
 
   /**
@@ -386,30 +386,29 @@ public class GalleryController {
   public Result<Void> likeComment(@RequestBody Map<String, Long> map, HttpServletRequest request) {
     Long commentId = map.get("comment_id");
     if (commentId == null) {
-      return Result.error("评论ID不能为空哦～🖤");
+      return Result.error("评论ID不能为空哦～");
     }
 
     User user = getCurrentUser(request);
     if (user == null) {
-      return Result.error("请先登录哦～❤️");
+      return Result.error("请先登录哦～");
     }
 
     // 检查是否已赞（UNIQUE KEY也会防重，但先查更温柔）
     if (commentLikeMapper.countByUserIdAndCommentId(user.getId(), commentId) > 0) {
-      return Result.error("你已经为这条温暖的话点过赞啦～这份爱已永恒留存❤️");
+      return Result.error("你已经点过赞啦～");
     }
 
     // 插入记录（INSERT IGNORE 双保险）
     int rows = commentLikeMapper.insert(user.getId(), commentId);
     if (rows == 0) {
-      return Result.error("这份爱已经存在啦～不能重复哦❤️");
+      return Result.error("不能重复哦");
     }
 
     // 原子增加点赞数
     commentMapper.incrementLikeCount(commentId);
 
-    log.info("宝贝{}为评论{}点亮了一颗永恒的小星星～✨", user.getUsername(), commentId);
-    return Result.success("点赞成功！你的爱已化作永恒的月光，温柔环抱这条话语～❤️");
+    return Result.success("点赞成功！");
   }
 
   /**
@@ -450,7 +449,7 @@ public class GalleryController {
   public Result<Boolean> isGalleryLiked(@PathVariable Long id, HttpServletRequest request) {
     User user = getCurrentUser(request);
     if (user == null) {
-      return Result.success(false, "未登录默认未赞哦～");
+      return Result.success(false, "未登录默认未赞");
     }
     boolean isLiked = galleryLikeMapper.countByUserIdAndGalleryId(user.getId(), id) > 0;
     return Result.success(isLiked);

@@ -41,11 +41,11 @@ public class OssController {
   public Result<String> upload(@RequestParam("file") MultipartFile file,
       @RequestParam("type") String type) {
     if (file.isEmpty()) {
-      return Result.error("文件不能为空哦～🖤");
+      return Result.error("文件不能为空哦～");
     }
 
     if (file.getSize() > MAX_FILE_SIZE) {
-      return Result.error("文件太大啦～目前限制10MB以内哦❤️");
+      return Result.error("文件太大啦～");
     }
 
     String originalFilename = file.getOriginalFilename();
@@ -82,11 +82,11 @@ public class OssController {
 
     try {
       String url = ossUtil.upload(file, fileType);
-      log.info("宝贝成功上传{}文件～URL: {}", type, url);
-      return Result.success(url, "上传成功啦～已安全存入月光宝库❤️");
+      log.info("成功上传{}文件～URL: {}", type, url);
+      return Result.success(url, "上传成功啦～");
     } catch (IOException e) {
       log.error("上传失败啦～", e);
-      return Result.error("上传失败了～服务器小哭一下，再试试？🖤");
+      return Result.error("上传失败了～再试试？🖤");
     }
   }
 

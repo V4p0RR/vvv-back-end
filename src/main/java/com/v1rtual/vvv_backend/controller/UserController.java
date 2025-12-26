@@ -42,21 +42,21 @@ public class UserController {
   public Result<String> uploadAvatar(@RequestParam("avatar") MultipartFile file,
       HttpServletRequest request) {
     if (file.isEmpty()) {
-      return Result.error("请选择一张图片哦～🖤");
+      return Result.error("请选择一张图片哦～");
     }
 
     if (file.getSize() > 10 * 1024 * 1024) { // 10MB限制，可调
-      return Result.error("图片太大啦～目前限制10MB以内❤️");
+      return Result.error("图片太大啦～");
     }
 
     String username = getCurrentUsername(request);
     if (username == null) {
-      return Result.error("请先登录哦～❤️");
+      return Result.error("请先登录哦～");
     }
 
     User user = userService.findByUsername(username);
     if (user == null) {
-      return Result.error("用户不存在啦～");
+      return Result.error("用户不存在～");
     }
 
     try {
@@ -67,11 +67,11 @@ public class UserController {
       user.setAvatar(url);
       userService.update(user);
 
-      log.info("宝贝{}温柔更换头像成功～URL: {}", username, url);
-      return Result.success(url, "头像已温柔更换～✞");
+      log.info("{}更换头像成功～URL: {}", username, url);
+      return Result.success(url, "头像已更换～");
     } catch (Exception e) {
       log.error("头像上传失败～", e);
-      return Result.error("上传失败了～服务器小哭一下，再试试？🖤");
+      return Result.error("上传失败了～再试试？");
     }
   }
 
@@ -82,17 +82,17 @@ public class UserController {
   public Result<String> updateUsername(@RequestBody Map<String, String> map, HttpServletRequest request) {
     String newUsername = map.get("username");
     if (newUsername == null || newUsername.trim().isEmpty()) {
-      return Result.error("用户名不能为空哦～🖤");
+      return Result.error("用户名不能为空哦～");
     }
 
     String currentUsername = getCurrentUsername(request);
     if (currentUsername == null) {
-      return Result.error("请先登录哦～❤️");
+      return Result.error("请先登录哦～");
     }
 
     // 检查新用户名是否已被占用
     if (userService.findByUsername(newUsername) != null) {
-      return Result.error("这个名字已经被别人温柔占有了哦～再想一个？🖤");
+      return Result.error("这个名字已经被别人占有了哦～再想一个？");
     }
 
     User user = userService.findByUsername(currentUsername);
@@ -103,8 +103,8 @@ public class UserController {
     user.setUsername(newUsername);
     userService.update(user);
 
-    log.info("宝贝从{}温柔变更为{}～", currentUsername, newUsername);
-    return Result.success(newUsername, "用户名已温柔变更～");
+    log.info("{}变更为{}～", currentUsername, newUsername);
+    return Result.success(newUsername, "用户名已变更～");
   }
 
   /**
@@ -114,24 +114,24 @@ public class UserController {
   public Result<String> updatePassword(@RequestBody Map<String, String> map, HttpServletRequest request) {
     String newPassword = map.get("password");
     if (newPassword == null || newPassword.trim().isEmpty()) {
-      return Result.error("新密码不能为空哦～🖤");
+      return Result.error("新密码不能为空哦～");
     }
 
     String username = getCurrentUsername(request);
     if (username == null) {
-      return Result.error("请先登录哦～❤️");
+      return Result.error("请先登录哦～");
     }
 
     User user = userService.findByUsername(username);
     if (user == null) {
-      return Result.error("用户不存在啦～");
+      return Result.error("用户不存在～");
     }
 
     user.setPassword(passwordEncoder.encode(newPassword));
     userService.update(user);
 
-    log.info("宝贝{}已安全更新密码～", username);
-    return Result.success(null, "密码已安全更新～下次用新密码哦🖤");
+    log.info("{}已安全更新密码～", username);
+    return Result.success(null, "密码已更新～下次用新密码哦");
   }
 
   /**
@@ -161,19 +161,19 @@ public class UserController {
   public Result<User> getUserInfo(HttpServletRequest request) {
     String username = getCurrentUsername(request);
     if (username == null) {
-      return Result.error("请先登录哦～🖤");
+      return Result.error("请先登录哦～");
     }
 
     User user = userService.findByUsername(username);
     if (user == null) {
-      return Result.error("用户不存在啦～");
+      return Result.error("用户不存在～");
     }
 
     // 可选：敏感字段清空（如密码永远不返回）
     user.setPassword(null);
 
-    log.info("宝贝{}温柔查看了个人信息～", username);
-    return Result.success(user, "你的月光花园已完整绽放～✞");
+    log.info("{}查看了个人信息～", username);
+    return Result.success(user, "查询成功～");
   }
 
   /**
@@ -188,12 +188,12 @@ public class UserController {
   }
 
   /**
-   * 获取注册用户总数～像一盏银灯，记录多少灵魂来过
+   * 获取注册用户总数
    */
   @GetMapping("/count")
   public Result<Long> getUserCount() {
     long count = userService.countUsers();
-    return Result.success(count, "古堡已有 " + count + " 位灵魂～✞");
+    return Result.success(count, "已有 " + count + " 位用户～✞");
   }
 
   /**
@@ -204,12 +204,12 @@ public class UserController {
   public Result<Void> updateInfo(@RequestBody User updateUser, HttpServletRequest request) {
     User currentUser = getCurrentUser(request);
     if (currentUser == null) {
-      return Result.error("请先登录哦～❤️");
+      return Result.error("请先登录哦～");
     }
 
     // 性别校验
     if (updateUser.getSex() != null && !List.of("MALE", "FEMALE", "SECRET").contains(updateUser.getSex())) {
-      return Result.error("性别格式错误～只支持MALE/FEMALE/SECRET哦🖤");
+      return Result.error("性别格式错误～只支持MALE/FEMALE/SECRET哦");
     }
 
     // 只更新前端传来的字段（密码为空就不改）
@@ -226,27 +226,27 @@ public class UserController {
 
     userService.update(currentUser);
 
-    log.info("宝贝{}温柔更新了个人信息～", currentUser.getUsername());
-    return Result.success("个人信息已温柔保存～✞");
+    log.info("{}更新了个人信息～", currentUser.getUsername());
+    return Result.success("个人信息已保存～");
   }
 
   /**
-   * 根据username获取用户公开信息～像一扇银门，轻轻推开就能看见TA的月光
+   * 根据username获取用户公开信息
    */
   @GetMapping("/info/{username}")
   public Result<User> getUserInfoByUsername(@PathVariable String username) {
     if (username == null || username.trim().isEmpty()) {
-      return Result.error("username无效哦～🖤");
+      return Result.error("username无效哦～");
     }
 
     User user = userService.findByUsername(username);
     if (user == null) {
-      return Result.error("这个小可爱还没来花园玩呢～");
+      return Result.error("这个家伙还没来V1rtual呢");
     }
 
     // 敏感字段清空（密码永远不返回）
     user.setPassword(null);
 
-    return Result.success(user, "TA的月光已完整绽放～✞");
+    return Result.success(user, "查询成功～");
   }
 }

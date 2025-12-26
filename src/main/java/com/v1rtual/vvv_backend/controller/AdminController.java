@@ -181,7 +181,7 @@ public class AdminController {
 
     homeConfigMapper.saveOrUpdate(config);
 
-    return Result.success("保存成功～✞");
+    return Result.success("保存成功～");
   }
 
   /**
@@ -196,9 +196,9 @@ public class AdminController {
       config = new HomeConfig();
       config.setMainType("video");
       config.setMainSrc("https://example.com/default-video.mp4");
-      config.setMainTitle("V1rtual 的月光时刻");
-      config.setMainDesc("欢迎来到我的想象世界～");
-      config.setMainAlt("月光温柔洒落");
+      config.setMainTitle("V1rtual");
+      config.setMainDesc("Welcome");
+      config.setMainAlt("");
       config.setMainRandom(0); // 只有首次才默认 0
       config.setGalleryJson("[]");
     }
@@ -208,9 +208,9 @@ public class AdminController {
     // null 安全（但不覆盖 mainRandom）
     String mainType = StringUtils.defaultString(config.getMainType(), "video");
     String mainSrc = StringUtils.defaultString(config.getMainSrc(), "https://example.com/default-video.mp4");
-    String mainTitle = StringUtils.defaultString(config.getMainTitle(), "V1rtual 的月光时刻");
-    String mainDesc = StringUtils.defaultString(config.getMainDesc(), "欢迎来到我的想象世界～");
-    String mainAlt = StringUtils.defaultString(config.getMainAlt(), "月光温柔洒落");
+    String mainTitle = StringUtils.defaultString(config.getMainTitle(), "V1rtual");
+    String mainDesc = StringUtils.defaultString(config.getMainDesc(), "Welcome");
+    String mainAlt = StringUtils.defaultString(config.getMainAlt(), "");
     boolean random = config.getMainRandom() != null && config.getMainRandom() == 1;
 
     Map<String, Object> main = Map.of(
@@ -234,18 +234,18 @@ public class AdminController {
     }
     result.put("galleryItems", gallery);
 
-    // 最新 Blog（前 3 条）
-    List<Blog> latest = blogMapper.selectLatest3();
-    result.put("latestBlogs", latest);
+    // // 最新 Blog（前 3 条）
+    // List<Blog> latest = blogMapper.selectLatest3();
+    // result.put("latestBlogs", latest);
 
-    // 置顶 Blog
-    Blog pinned = null;
-    if (config.getPinnedBlogId() != null) {
-      pinned = blogMapper.selectById(config.getPinnedBlogId());
-    }
-    result.put("pinnedBlog", pinned);
+    // // 置顶 Blog
+    // Blog pinned = null;
+    // if (config.getPinnedBlogId() != null) {
+    // pinned = blogMapper.selectById(config.getPinnedBlogId());
+    // }
+    // result.put("pinnedBlog", pinned);
 
-    return Result.success(result, "Home 配置加载成功～✞");
+    return Result.success(result, "Home 配置加载成功～");
   }
 
   /**

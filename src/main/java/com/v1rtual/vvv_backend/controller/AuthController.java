@@ -35,10 +35,10 @@ public class AuthController {
     User user = userService.getOrCreateUser(dto.getUsername(), dto.getPassword());
 
     if (!userService.checkPassword(dto.getPassword(), user.getPassword())) {
-      return Result.error("密码不对哦～再想想？🖤");
+      return Result.error("密码不对哦～再想想？");
     }
 
     String token = jwtUtil.generateToken(user.getUsername());
-    return Result.success(token, "欢迎回家～宝贝❤️");
+    return Result.success(token, "欢迎来到V1rtual～");
   }
 }

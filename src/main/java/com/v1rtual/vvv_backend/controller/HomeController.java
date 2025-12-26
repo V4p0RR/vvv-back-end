@@ -138,16 +138,16 @@ public class HomeController {
     }
     result.put("galleryItems", galleryItems);
 
-    // 最新 Blog（前 3 条）
-    List<Blog> latestBlogs = blogMapper.selectLatest3(); // 见下面 Mapper 定义
-    result.put("latestBlogs", latestBlogs);
+    // // 最新 Blog（前 3 条）
+    // List<Blog> latestBlogs = blogMapper.selectLatest3(); // 见下面 Mapper 定义
+    // result.put("latestBlogs", latestBlogs);
 
-    // 置顶 Blog（右半部分）
-    Blog pinnedBlog = null;
-    if (config.getPinnedBlogId() != null) {
-      pinnedBlog = blogMapper.selectById(config.getPinnedBlogId());
-    }
-    result.put("pinnedBlog", pinnedBlog);
+    // // 置顶 Blog（右半部分）
+    // Blog pinnedBlog = null;
+    // if (config.getPinnedBlogId() != null) {
+    // pinnedBlog = blogMapper.selectById(config.getPinnedBlogId());
+    // }
+    // result.put("pinnedBlog", pinnedBlog);
 
     return Result.success(result, "Home 配置加载成功");
   }
@@ -321,7 +321,7 @@ public class HomeController {
     data.put("uploaderUsername", uploaderUsername);
     data.put("uploadTime", uploadTime);
 
-    return Result.success(data, "完整资源加载成功～✞");
+    return Result.success(data, "完整资源加载成功～");
   }
 
   /**
@@ -334,7 +334,7 @@ public class HomeController {
       return Result.success(list);
     } catch (Exception e) {
       log.error("随机获取 gallery 失败", e);
-      return Result.error("获取月光碎片失败...服务器小哭一下QAQ");
+      return Result.error("获取失败...QAQ");
     }
   }
 }
