@@ -2,7 +2,17 @@
 
 ## 项目概述
 
-**v1.0 原初之地版本** 是一个个人网站后端系统，专注于创建一个充满个性和情感的数字空间。项目名为"V1rtual"，致力于打造一个温柔、充满想象的个人网站。
+**v1.0 原初之地**
+个人网站后端。
+
+<img width="1906" height="941" alt="image" src="https://github.com/user-attachments/assets/08e599c7-8cd7-444c-8b2c-8499e28dc25f" />
+
+<img width="1894" height="933" alt="image" src="https://github.com/user-attachments/assets/6f6888b8-3528-4431-abe3-cd28971c574f" />
+
+<img width="1835" height="928" alt="image" src="https://github.com/user-attachments/assets/11d832ed-a2a9-4bb4-8db7-502ff8d4d56e" />
+
+<img width="1887" height="944" alt="image" src="https://github.com/user-attachments/assets/dff94273-a28f-477a-a819-4f593e41cc3f" />
+
 
 ## 技术栈
 
